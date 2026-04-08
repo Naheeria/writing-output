@@ -2,6 +2,12 @@
    script.js — 글 이미지 생성기
    ────────────────────────────────────────── */
 
+// ── Page dimensions ──
+const SIZES = {
+  a5:  { w: 560, h: 794 },
+  bar: { w: 420, h: 686 },
+};
+
 // ── State ──
 const state = {
   template: 1,
@@ -10,23 +16,28 @@ const state = {
   showTitle: true,
   title: '',
   body: '',
-  bgImageSrc: null,   // template 1
-  bgColor: '#FFFFFF', // template 2
-  showPageNum: false, // template 2
+  indent: false,
+  bgImageSrc: null,    // template 1
+  tpl1Opacity: 92,     // template 1, 0–100
+  bgColor: '#FFFFFF',  // template 2
+  showPageNum: false,  // template 2
 };
 
 // ── DOM refs ──
-const previewEl       = document.getElementById('previewContainer');
-const titleInput      = document.getElementById('titleInput');
-const bodyInput       = document.getElementById('bodyInput');
-const showTitleChk    = document.getElementById('showTitle');
-const titleFieldWrap  = document.getElementById('titleFieldWrap');
-const fontSelect      = document.getElementById('fontSelect');
-const bgImageInput    = document.getElementById('bgImageInput');
-const imageFileName   = document.getElementById('imageFileName');
-const clearImageBtn   = document.getElementById('clearImageBtn');
-const showPageNumChk  = document.getElementById('showPageNum');
-const downloadBtn     = document.getElementById('downloadBtn');
+const pagesWrap        = document.getElementById('pagesWrap');
+const titleInput       = document.getElementById('titleInput');
+const bodyInput        = document.getElementById('bodyInput');
+const showTitleChk     = document.getElementById('showTitle');
+const titleFieldWrap   = document.getElementById('titleFieldWrap');
+const indentToggle     = document.getElementById('indentToggle');
+const fontSelect       = document.getElementById('fontSelect');
+const bgImageInput     = document.getElementById('bgImageInput');
+const imageFileName    = document.getElementById('imageFileName');
+const clearImageBtn    = document.getElementById('clearImageBtn');
+const tpl1OpacitySlider = document.getElementById('tpl1OpacitySlider');
+const tpl1OpacityVal   = document.getElementById('tpl1OpacityVal');
+const showPageNumChk   = document.getElementById('showPageNum');
+const downloadBtn      = document.getElementById('downloadBtn');
 
 // ── Init ──
 renderPreview();
@@ -34,18 +45,20 @@ bindEvents();
 
 // ── Event Binding ──
 function bindEvents() {
-  // Title toggle
   showTitleChk.addEventListener('change', () => {
     state.showTitle = showTitleChk.checked;
     titleFieldWrap.style.display = state.showTitle ? 'block' : 'none';
     renderPreview();
   });
 
-  // Title / body text
   titleInput.addEventListener('input', () => { state.title = titleInput.value; renderPreview(); });
   bodyInput.addEventListener('input',  () => { state.body  = bodyInput.value;  renderPreview(); });
 
-  // Template selection
+  indentToggle.addEventListener('change', () => {
+    state.indent = indentToggle.checked;
+    renderPreview();
+  });
+
   document.querySelectorAll('.tpl-card').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tpl-card').forEach(b => b.classList.remove('active'));
@@ -56,24 +69,20 @@ function bindEvents() {
     });
   });
 
-  // Size selection
   document.querySelectorAll('input[name="size"]').forEach(radio => {
     radio.addEventListener('change', () => {
       if (radio.checked) {
         state.size = radio.value;
-        previewEl.className = 'preview-container size-' + state.size;
         renderPreview();
       }
     });
   });
 
-  // Font selection
   fontSelect.addEventListener('change', () => {
     state.font = fontSelect.value;
     renderPreview();
   });
 
-  // Image upload
   bgImageInput.addEventListener('change', () => {
     const file = bgImageInput.files[0];
     if (!file) return;
@@ -95,7 +104,12 @@ function bindEvents() {
     renderPreview();
   });
 
-  // BG color buttons
+  tpl1OpacitySlider.addEventListener('input', () => {
+    state.tpl1Opacity = parseInt(tpl1OpacitySlider.value, 10);
+    tpl1OpacityVal.textContent = state.tpl1Opacity + '%';
+    renderPreview();
+  });
+
   document.querySelectorAll('.bg-color-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.bg-color-btn').forEach(b => b.classList.remove('active'));
@@ -105,13 +119,11 @@ function bindEvents() {
     });
   });
 
-  // Page number toggle
   showPageNumChk.addEventListener('change', () => {
     state.showPageNum = showPageNumChk.checked;
     renderPreview();
   });
 
-  // Download
   downloadBtn.addEventListener('click', downloadPNG);
 }
 
@@ -121,23 +133,105 @@ function updateConditionalOpts() {
   document.getElementById('opts-tpl2').style.display = state.template === 2 ? 'block' : 'none';
 }
 
-// ── Render Preview ──
+// ──────────────────────────────────────────
+//  Main Render
+// ──────────────────────────────────────────
 function renderPreview() {
-  previewEl.innerHTML = '';
-  previewEl.style.fontFamily = state.font;
+  pagesWrap.innerHTML = '';
+
+  const pageTexts = paginateBody();
+
+  pageTexts.forEach((bodyText, idx) => {
+    const pageEl = createPageEl();
+    renderPageContent(pageEl, bodyText, idx, pageTexts.length);
+    pagesWrap.appendChild(pageEl);
+  });
+}
+
+function createPageEl() {
+  const p = document.createElement('div');
+  p.className = 'preview-page size-' + state.size;
+  return p;
+}
+
+// ──────────────────────────────────────────
+//  Pagination
+// ──────────────────────────────────────────
+function paginateBody() {
+  const body = state.body || '';
+  if (!body) return [''];
+
+  const paragraphs = body.split('\n');
+  const result = [];
+  let curParas = [];
+  let isFirstPage = true;
+
+  // Hidden test page for overflow detection
+  const testPage = createPageEl();
+  testPage.style.cssText += ';position:fixed;left:-9999px;top:0;pointer-events:none;visibility:hidden;';
+  document.body.appendChild(testPage);
+
+  function fits(text, isFirst) {
+    renderPageContent(testPage, text, isFirst ? 0 : 1, 2);
+    const bodyEl = testPage.querySelector('[data-role="body"]');
+    if (!bodyEl) return true;
+    return bodyEl.scrollHeight <= bodyEl.clientHeight + 2;
+  }
+
+  try {
+    for (let i = 0; i < paragraphs.length; i++) {
+      const candidate = [...curParas, paragraphs[i]];
+      if (fits(candidate.join('\n'), isFirstPage) || curParas.length === 0) {
+        curParas = candidate;
+      } else {
+        result.push(curParas.join('\n'));
+        isFirstPage = false;
+        curParas = [paragraphs[i]];
+      }
+    }
+  } finally {
+    document.body.removeChild(testPage);
+  }
+
+  result.push(curParas.join('\n'));
+  return result;
+}
+
+// ──────────────────────────────────────────
+//  Page Content Dispatcher
+// ──────────────────────────────────────────
+function renderPageContent(pageEl, bodyText, pageIdx, totalPages) {
+  pageEl.innerHTML = '';
+  pageEl.style.fontFamily = state.font;
 
   switch (state.template) {
-    case 1: renderTemplate1(); break;
-    case 2: renderTemplate2(); break;
-    case 3: renderTemplate3(); break;
-    case 4: renderTemplate4(); break;
+    case 1: renderTemplate1(pageEl, bodyText, pageIdx, totalPages); break;
+    case 2: renderTemplate2(pageEl, bodyText, pageIdx, totalPages); break;
+  }
+}
+
+// ──────────────────────────────────────────
+//  Render body text (with/without indent)
+// ──────────────────────────────────────────
+function renderBodyInto(container, text) {
+  if (state.indent) {
+    const paras = text.split('\n');
+    paras.forEach(para => {
+      const p = document.createElement('p');
+      p.className = 'body-para';
+      p.textContent = para;
+      container.appendChild(p);
+    });
+  } else {
+    container.classList.add('no-indent');
+    container.textContent = text;
   }
 }
 
 // ──────────────────────────────────────────
 //  Template 1 — 이미지 테두리형
 // ──────────────────────────────────────────
-function renderTemplate1() {
+function renderTemplate1(pageEl, bodyText, pageIdx, totalPages) {
   const wrap = el('div', 'tpl1-wrap');
 
   if (state.bgImageSrc) {
@@ -149,143 +243,101 @@ function renderTemplate1() {
     wrap.appendChild(el('div', 'tpl1-bg-placeholder'));
   }
 
+  const opacity = state.tpl1Opacity / 100;
   const textbox = el('div', 'tpl1-textbox');
+  textbox.style.background = `rgba(255,255,255,${opacity})`;
 
-  if (state.showTitle && state.title) {
+  if (state.showTitle && state.title && pageIdx === 0) {
     const t = el('div', 'tpl1-title');
     t.textContent = state.title;
     textbox.appendChild(t);
   }
 
   const b = el('div', 'tpl1-body');
-  b.textContent = state.body || '본문을 입력하세요.';
+  b.setAttribute('data-role', 'body');
+  renderBodyInto(b, bodyText || '본문을 입력하세요.');
   textbox.appendChild(b);
 
   wrap.appendChild(textbox);
-  previewEl.appendChild(wrap);
+  pageEl.appendChild(wrap);
 }
 
 // ──────────────────────────────────────────
 //  Template 2 — 단색 배경형
 // ──────────────────────────────────────────
-function renderTemplate2() {
+function renderTemplate2(pageEl, bodyText, pageIdx, totalPages) {
   const wrap = el('div', 'tpl2-wrap');
   wrap.style.background = state.bgColor;
 
   const isDark = state.bgColor === '#1A1A1A';
   wrap.style.color = isDark ? '#F0EDE8' : '#1A1A1A';
 
-  if (state.showTitle && state.title) {
+  if (state.showTitle && state.title && pageIdx === 0) {
     const t = el('div', 'tpl2-title');
     t.textContent = state.title;
     wrap.appendChild(t);
   }
 
   const b = el('div', 'tpl2-body');
-  b.textContent = state.body || '본문을 입력하세요.';
+  b.setAttribute('data-role', 'body');
+  renderBodyInto(b, bodyText || '본문을 입력하세요.');
   wrap.appendChild(b);
 
   if (state.showPageNum) {
     const pn = el('div', 'tpl2-pagenum');
-    pn.textContent = '1';
+    pn.textContent = String(pageIdx + 1);
     wrap.appendChild(pn);
   }
 
-  previewEl.appendChild(wrap);
+  pageEl.appendChild(wrap);
 }
 
 // ──────────────────────────────────────────
-//  Template 3 — 인용구 강조형
-// ──────────────────────────────────────────
-function renderTemplate3() {
-  const wrap = el('div', 'tpl3-wrap');
-
-  if (state.showTitle && state.title) {
-    const t = el('div', 'tpl3-title');
-    t.textContent = state.title;
-    wrap.appendChild(t);
-  }
-
-  const lines = state.body ? state.body.split('\n') : [];
-  // First non-empty paragraph as lead quote
-  let leadText = '';
-  let restText = '';
-  let foundLead = false;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!foundLead) {
-      if (line.trim()) {
-        leadText = line;
-        foundLead = true;
-      }
-    } else {
-      restText += (restText ? '\n' : '') + line;
-    }
-  }
-
-  const lead = el('div', 'tpl3-lead');
-  lead.textContent = leadText || '첫 번째 문장을\n크게 표시합니다.';
-  wrap.appendChild(lead);
-
-  if (restText || !state.body) {
-    const body = el('div', 'tpl3-body');
-    body.textContent = restText || '나머지 본문은 이곳에 작게 표시됩니다.';
-    wrap.appendChild(body);
-  }
-
-  previewEl.appendChild(wrap);
-}
-
-// ──────────────────────────────────────────
-//  Template 4 — 신문/잡지형
-// ──────────────────────────────────────────
-function renderTemplate4() {
-  const wrap = el('div', 'tpl4-wrap');
-
-  const titleText = (state.showTitle && state.title) ? state.title : '제목';
-  const t = el('div', 'tpl4-title');
-  t.textContent = titleText;
-  // Apply current font to title as well — but keep it prominent
-  t.style.fontFamily = state.font;
-  wrap.appendChild(t);
-
-  const hr = document.createElement('hr');
-  hr.className = 'tpl4-hr';
-  wrap.appendChild(hr);
-
-  const b = el('div', 'tpl4-body');
-  b.textContent = state.body || '본문을 입력하세요. 이 템플릿은 2단 컬럼으로 텍스트를 배치하여 신문이나 잡지처럼 보이는 레이아웃을 제공합니다.';
-  wrap.appendChild(b);
-
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-  const footer = el('div', 'tpl4-footer');
-  footer.textContent = dateStr;
-  wrap.appendChild(footer);
-
-  previewEl.appendChild(wrap);
-}
-
-// ──────────────────────────────────────────
-//  PNG Download
+//  PNG Download (all pages merged)
 // ──────────────────────────────────────────
 async function downloadPNG() {
   downloadBtn.disabled = true;
   downloadBtn.textContent = '생성 중…';
 
   try {
-    const canvas = await html2canvas(previewEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: null,
-      logging: false,
-    });
+    const pages = [...pagesWrap.querySelectorAll('.preview-page')];
+    const SCALE = 2;
 
-    const link = document.createElement('a');
-    link.download = 'writing-output.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    const canvases = [];
+    for (const p of pages) {
+      const c = await html2canvas(p, {
+        scale: SCALE,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+      });
+      canvases.push(c);
+    }
+
+    if (canvases.length === 1) {
+      const link = document.createElement('a');
+      link.download = 'writing-output.png';
+      link.href = canvases[0].toDataURL('image/png');
+      link.click();
+    } else {
+      // Merge pages vertically
+      const totalH = canvases.reduce((s, c) => s + c.height, 0);
+      const width   = Math.max(...canvases.map(c => c.width));
+      const merged  = document.createElement('canvas');
+      merged.width  = width;
+      merged.height = totalH;
+      const ctx = merged.getContext('2d');
+      let y = 0;
+      for (const c of canvases) {
+        ctx.drawImage(c, 0, y);
+        y += c.height;
+      }
+      const link = document.createElement('a');
+      link.download = 'writing-output.png';
+      link.href = merged.toDataURL('image/png');
+      link.click();
+    }
   } catch (err) {
     console.error('Download failed:', err);
     alert('다운로드 중 오류가 발생했습니다. 다시 시도해주세요.');

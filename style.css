@@ -185,8 +185,8 @@ html, body {
   background: linear-gradient(135deg, #8BA888 25%, #C6D9C2 75%);
 }
 .tpl-thumb-1 .tpl-thumb-inner {
-  width: 34px;
-  height: 38px;
+  width: 40px;
+  height: 42px;
   background: rgba(255,255,255,0.88);
   border-radius: 2px;
 }
@@ -211,39 +211,6 @@ html, body {
 }
 .tpl-thumb-2 .tpl-thumb-lines::before { width: 70%; }
 .tpl-thumb-2 .tpl-thumb-lines::after { width: 100%; box-shadow: 0 6px 0 #BBB, 0 12px 0 #BBB; }
-
-.tpl-thumb-3 {
-  background: #F5F0E8;
-  border-left: 3px solid #5B7055;
-}
-.tpl-thumb-quote {
-  font-size: 2rem;
-  line-height: 1;
-  color: #5B7055;
-  font-family: 'Nanum Myeongjo', serif;
-}
-
-.tpl-thumb-4 {
-  background: #fff;
-  border: 1px solid #DDD;
-  padding: 4px;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 3px;
-}
-.tpl-thumb-news {
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(#333 2px, transparent 2px) 0 4px,
-    linear-gradient(#DDD 1px, transparent 1px) 0 10px,
-    linear-gradient(#DDD 1px, transparent 1px) 0 16px,
-    linear-gradient(#DDD 1px, transparent 1px) 0 22px,
-    linear-gradient(#DDD 1px, transparent 1px) 0 28px,
-    linear-gradient(#DDD 1px, transparent 1px) 0 34px;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-}
 
 /* ── Radio Group ── */
 .radio-group { display: flex; flex-direction: column; gap: 10px; }
@@ -350,6 +317,50 @@ html, body {
 
 .clear-btn:hover { background: #F5F5F5; }
 
+/* ── Slider ── */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-input {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: #DDD9D2;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #5B7055;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #5B7055;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.slider-val {
+  font-size: 0.82rem;
+  color: #555;
+  min-width: 36px;
+  text-align: right;
+}
+
 /* ── BG Color Buttons ── */
 .bg-color-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -408,20 +419,20 @@ html, body {
 .preview-area {
   overflow: auto;
   background: #F0EDE8;
+}
+
+/* ── Pages Wrap ── */
+.pages-wrap {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
   padding: 40px 32px;
+  min-height: 100%;
 }
 
-.preview-scroll-wrap {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-/* ── Preview Container ── */
-.preview-container {
+/* ── Preview Page ── */
+.preview-page {
   background: #fff;
   flex-shrink: 0;
   overflow: hidden;
@@ -429,8 +440,8 @@ html, body {
   position: relative;
 }
 
-.preview-container.size-a5  { width: 420px; height: 594px; }
-.preview-container.size-bar { width: 420px; height: 980px; }
+.preview-page.size-a5  { width: 560px; height: 794px; }
+.preview-page.size-bar { width: 420px; height: 686px; }
 
 /* ── Template 1: Image Border ── */
 .tpl1-wrap {
@@ -460,12 +471,13 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 62%;
-  max-height: 82%;
-  background: rgba(255,255,255,0.92);
-  padding: 36px 32px;
+  width: 80%;
+  max-height: 88%;
+  padding: 28px 28px;
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
 }
 
 .tpl1-title {
@@ -474,13 +486,15 @@ html, body {
   margin-bottom: 14px;
   line-height: 1.5;
   word-break: keep-all;
+  flex-shrink: 0;
 }
 
 .tpl1-body {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   line-height: 1.9;
   word-break: keep-all;
-  white-space: pre-wrap;
+  overflow: hidden;
+  flex: 1;
 }
 
 /* ── Template 2: Solid Background ── */
@@ -490,7 +504,7 @@ html, body {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 56px 52px 48px;
+  padding: 52px 56px 44px;
 }
 
 .tpl2-title {
@@ -500,105 +514,40 @@ html, body {
   line-height: 1.5;
   word-break: keep-all;
   text-align: left;
+  flex-shrink: 0;
 }
 
 .tpl2-body {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   line-height: 2;
-  text-indent: 1em;
   word-break: keep-all;
-  white-space: pre-wrap;
+  overflow: hidden;
   flex: 1;
+}
+
+.tpl2-body.no-indent {
+  white-space: pre-wrap;
 }
 
 .tpl2-pagenum {
   position: absolute;
-  bottom: 28px;
+  bottom: 24px;
   right: 40px;
   font-size: 0.78rem;
   opacity: 0.5;
 }
 
-/* ── Template 3: Quote Emphasis ── */
-.tpl3-wrap {
-  width: 100%;
-  height: 100%;
-  background: #F5F0E8;
-  display: flex;
-  flex-direction: column;
-  padding: 52px 48px;
-  border-left: 4px solid #5B7055;
-  position: relative;
-}
-
-.tpl3-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #5B7055;
-  margin-bottom: 18px;
-  text-transform: uppercase;
-}
-
-.tpl3-lead {
-  font-size: 1.7rem;
-  font-weight: 700;
-  line-height: 1.5;
-  color: #2A2A2A;
-  margin-bottom: 24px;
+/* ── Body paragraph (indent mode) ── */
+.body-para {
+  margin: 0;
+  text-indent: 1em;
   word-break: keep-all;
+  line-height: inherit;
+  font-size: inherit;
 }
 
-.tpl3-body {
-  font-size: 0.88rem;
-  line-height: 1.9;
-  color: #555;
-  word-break: keep-all;
-  white-space: pre-wrap;
-  flex: 1;
-}
-
-/* ── Template 4: Newspaper / Magazine ── */
-.tpl4-wrap {
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 44px 40px 36px;
-}
-
-.tpl4-title {
-  font-size: 1.7rem;
-  font-weight: 800;
-  font-family: 'Nanum Myeongjo', serif;
-  line-height: 1.3;
-  margin-bottom: 12px;
-  word-break: keep-all;
-}
-
-.tpl4-hr {
-  border: none;
-  border-top: 2px solid #1A1A1A;
-  margin-bottom: 20px;
-}
-
-.tpl4-body {
-  font-size: 0.83rem;
-  line-height: 1.85;
-  column-count: 2;
-  column-gap: 28px;
-  word-break: keep-all;
-  white-space: pre-wrap;
-  flex: 1;
-  column-rule: 1px solid #E0DDD8;
-}
-
-.tpl4-footer {
-  margin-top: 16px;
-  font-size: 0.75rem;
-  color: #999;
-  text-align: right;
+.body-para:empty::before {
+  content: '\00a0';
 }
 
 /* ── Responsive ── */
@@ -616,7 +565,6 @@ html, body {
   }
   .preview-area {
     min-height: 650px;
-    padding: 24px 16px;
   }
   .download-wrap { position: static; }
 }

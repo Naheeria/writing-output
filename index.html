@@ -48,6 +48,14 @@
         </div>
 
         <textarea id="bodyInput" class="text-area" rows="8" placeholder="본문을 입력하세요&#10;&#10;여러 줄의 글을 입력할 수 있습니다."></textarea>
+
+        <label class="toggle-row" style="margin-top:12px;margin-bottom:0;">
+          <span>들여쓰기</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="indentToggle" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
       </section>
 
       <!-- 템플릿 선택 -->
@@ -66,18 +74,6 @@
             </div>
             <span>단색 배경형</span>
           </button>
-          <button class="tpl-card" data-tpl="3">
-            <div class="tpl-thumb tpl-thumb-3">
-              <div class="tpl-thumb-quote">"</div>
-            </div>
-            <span>인용구 강조형</span>
-          </button>
-          <button class="tpl-card" data-tpl="4">
-            <div class="tpl-thumb tpl-thumb-4">
-              <div class="tpl-thumb-news"></div>
-            </div>
-            <span>신문/잡지형</span>
-          </button>
         </div>
       </section>
 
@@ -88,12 +84,12 @@
           <label class="radio-label">
             <input type="radio" name="size" value="a5" checked />
             <span class="radio-btn"></span>
-            <span>A5형 <em>(420 × 594px)</em></span>
+            <span>A5형 <em>(560 × 794px)</em></span>
           </label>
           <label class="radio-label">
             <input type="radio" name="size" value="bar" />
             <span class="radio-btn"></span>
-            <span>바(Bar)형 <em>(420 × 980px)</em></span>
+            <span>바(Bar)형 <em>(420 × 686px)</em></span>
           </label>
         </div>
       </section>
@@ -110,7 +106,7 @@
       </section>
 
       <!-- 조건부 옵션 -->
-      <!-- 템플릿 1 옵션: 이미지 업로드 -->
+      <!-- 템플릿 1 옵션: 이미지 업로드 + 투명도 -->
       <section class="panel-section conditional-opts" id="opts-tpl1">
         <div class="section-label">배경 이미지</div>
         <label class="upload-btn">
@@ -119,6 +115,12 @@
         </label>
         <p id="imageFileName" class="file-name-display">선택된 파일 없음</p>
         <button id="clearImageBtn" class="clear-btn" style="display:none">이미지 제거</button>
+
+        <div class="section-label" style="margin-top:16px;">텍스트박스 투명도</div>
+        <div class="slider-row">
+          <input type="range" id="tpl1OpacitySlider" min="0" max="100" value="92" class="slider-input" />
+          <span id="tpl1OpacityVal" class="slider-val">92%</span>
+        </div>
       </section>
 
       <!-- 템플릿 2 옵션: 배경색 -->
@@ -154,10 +156,8 @@
 
     <!-- ── 오른쪽 프리뷰 영역 ── -->
     <main class="preview-area">
-      <div class="preview-scroll-wrap">
-        <div id="previewContainer" class="preview-container size-a5">
-          <!-- JS로 렌더링 -->
-        </div>
+      <div id="pagesWrap" class="pages-wrap">
+        <!-- JS로 렌더링 -->
       </div>
     </main>
 
