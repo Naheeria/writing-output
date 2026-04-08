@@ -2,6 +2,9 @@
    script.js — 글 이미지 생성기
    ────────────────────────────────────────── */
 
+// ── Constants ──
+const OVERFLOW_TOLERANCE = 2; // px tolerance for scrollHeight vs clientHeight check
+
 // ── Page dimensions ──
 const SIZES = {
   a5:  { w: 560, h: 794 },
@@ -172,10 +175,12 @@ function paginateBody() {
   document.body.appendChild(testPage);
 
   function fits(text, isFirst) {
-    renderPageContent(testPage, text, isFirst ? 0 : 1, 2);
+    // Pass 0 as total since page count is unknown during pagination;
+    // page number display does not affect layout calculations.
+    renderPageContent(testPage, text, isFirst ? 0 : 1, 0);
     const bodyEl = testPage.querySelector('[data-role="body"]');
     if (!bodyEl) return true;
-    return bodyEl.scrollHeight <= bodyEl.clientHeight + 2;
+    return bodyEl.scrollHeight <= bodyEl.clientHeight + OVERFLOW_TOLERANCE;
   }
 
   try {
