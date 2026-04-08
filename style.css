@@ -491,6 +491,9 @@ html, body {
   position: relative;
   overflow: hidden;
   background: #8BA888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tpl1-bg {
@@ -508,10 +511,8 @@ html, body {
 }
 
 .tpl1-textbox {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
+  z-index: 1;
   width: 80%;
   height: 88%;
   padding: 28px 28px;
@@ -534,6 +535,7 @@ html, body {
   font-size: 0.84rem;
   line-height: 1.9;
   word-break: break-all;
+  text-justify: inter-character;
   overflow: hidden;
   flex: 1;
 }
@@ -562,6 +564,7 @@ html, body {
   font-size: 0.9rem;
   line-height: 2;
   word-break: break-all;
+  text-justify: inter-character;
   overflow: hidden;
   flex: 1;
 }
@@ -579,6 +582,7 @@ html, body {
   margin: 0 0 0.3em 0;
   text-indent: 1em;
   word-break: break-all;
+  text-justify: inter-character;
   line-height: inherit;
   font-size: inherit;
 }
