@@ -533,7 +533,7 @@ html, body {
 .tpl1-body {
   font-size: 0.84rem;
   line-height: 1.9;
-  word-break: keep-all;
+  word-break: break-all;
   overflow: hidden;
   flex: 1;
 }
@@ -561,7 +561,7 @@ html, body {
 .tpl2-body {
   font-size: 0.9rem;
   line-height: 2;
-  word-break: keep-all;
+  word-break: break-all;
   overflow: hidden;
   flex: 1;
 }
@@ -576,11 +576,15 @@ html, body {
 
 /* ── Body paragraph (indent mode) ── */
 .body-para {
-  margin: 0;
+  margin: 0 0 0.3em 0;
   text-indent: 1em;
-  word-break: keep-all;
+  word-break: break-all;
   line-height: inherit;
   font-size: inherit;
+}
+
+.body-para:last-child {
+  margin-bottom: 0;
 }
 
 .body-para:empty::before {

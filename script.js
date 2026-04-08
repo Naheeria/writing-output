@@ -189,7 +189,7 @@ function createPageEl() {
 }
 
 // ──────────────────────────────────────────
-//  Pagination — word-level binary search
+//  Pagination — character-level binary search
 // ──────────────────────────────────────────
 function paginateBody() {
   const body = state.body || '';
@@ -218,19 +218,19 @@ function paginateBody() {
     pageParas = [];
   }
 
-  // Binary search: how many words (starting at wordStart) can be appended
-  // as a new paragraph to pageParas without overflow?
-  function fitWords(words, wordStart) {
-    const n = words.length - wordStart;
+  // Binary search: how many chars (starting at charStart) can be appended
+  // as a new paragraph segment to pageParas without overflow?
+  function fitChars(chars, charStart) {
+    const n = chars.length - charStart;
     if (n === 0) return 0;
 
     const tryN = (count) => {
-      const text = words.slice(wordStart, wordStart + count).join(' ');
+      const text = chars.slice(charStart, charStart + count).join('');
       return fitsCheck([...pageParas, text], isFirstPage);
     };
 
     if (!tryN(1)) {
-      // Force at least 1 word on an empty page to avoid infinite loop
+      // Force at least 1 char on an empty page to avoid infinite loop
       return pageParas.length === 0 ? 1 : 0;
     }
     if (tryN(n)) return n;
@@ -259,20 +259,20 @@ function paginateBody() {
         continue;
       }
 
-      const words = para.split(' ');
-      let wordStart = 0;
+      const chars = [...para]; // Unicode-aware character split
+      let charStart = 0;
 
-      while (wordStart < words.length) {
-        const count = fitWords(words, wordStart);
+      while (charStart < chars.length) {
+        const count = fitChars(chars, charStart);
         if (count === 0) {
           // Nothing fits on current page → flush and retry
           flushPage();
           continue;
         }
-        pageParas.push(words.slice(wordStart, wordStart + count).join(' '));
-        wordStart += count;
-        if (wordStart < words.length) {
-          // Words remain in this paragraph → need a new page
+        pageParas.push(chars.slice(charStart, charStart + count).join(''));
+        charStart += count;
+        if (charStart < chars.length) {
+          // Characters remain in this paragraph → need a new page
           flushPage();
         }
       }
