@@ -281,8 +281,10 @@ function paginateBody() {
     document.body.removeChild(testPage);
   }
 
-  result.push(pageParas.join('\n'));
-  return result;
+  if (pageParas.length > 0) {
+    result.push(pageParas.join('\n'));
+  }
+  return result.length ? result : [''];
 }
 
 // ──────────────────────────────────────────
