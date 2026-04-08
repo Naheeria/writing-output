@@ -388,6 +388,47 @@ html, body {
   display: inline-block;
 }
 
+/* ── Alignment Buttons ── */
+.align-group {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.align-btn {
+  padding: 7px 4px;
+  border: 1.5px solid #E0DDD8;
+  border-radius: 6px;
+  background: none;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #555;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.align-btn.active { border-color: #5B7055; color: #3A5034; font-weight: 700; background: #F0F4EE; }
+.align-btn:hover:not(.active) { border-color: #AABA9E; }
+
+/* ── Title Size Buttons ── */
+.size-btn-group { display: flex; gap: 8px; }
+
+.size-btn {
+  flex: 1;
+  padding: 7px;
+  border: 1.5px solid #E0DDD8;
+  border-radius: 6px;
+  background: none;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #555;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.size-btn.active { border-color: #5B7055; color: #3A5034; font-weight: 700; background: #F0F4EE; }
+.size-btn:hover:not(.active) { border-color: #AABA9E; }
+
 /* ── Download Button ── */
 .download-wrap {
   position: sticky;

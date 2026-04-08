@@ -20,6 +20,9 @@ const state = {
   title: '',
   body: '',
   indent: false,
+  textAlign: 'justify',  // 'justify' | 'left' | 'center' | 'right'
+  titleSize: 'md',       // 'sm' | 'md' | 'lg'
+  titleGap: 20,          // px between title and body
   bgImageSrc: null,    // template 1
   tpl1Opacity: 92,     // template 1, 0–100
   bgColor: '#FFFFFF',  // template 2
@@ -32,6 +35,9 @@ const titleInput       = document.getElementById('titleInput');
 const bodyInput        = document.getElementById('bodyInput');
 const showTitleChk     = document.getElementById('showTitle');
 const titleFieldWrap   = document.getElementById('titleFieldWrap');
+const titleStyleWrap   = document.getElementById('titleStyleWrap');
+const titleGapSlider   = document.getElementById('titleGapSlider');
+const titleGapVal      = document.getElementById('titleGapVal');
 const indentToggle     = document.getElementById('indentToggle');
 const fontSelect       = document.getElementById('fontSelect');
 const bgImageInput     = document.getElementById('bgImageInput');
@@ -51,6 +57,7 @@ function bindEvents() {
   showTitleChk.addEventListener('change', () => {
     state.showTitle = showTitleChk.checked;
     titleFieldWrap.style.display = state.showTitle ? 'block' : 'none';
+    titleStyleWrap.style.display = state.showTitle ? 'block' : 'none';
     renderPreview();
   });
 
@@ -128,6 +135,30 @@ function bindEvents() {
   });
 
   downloadBtn.addEventListener('click', downloadPNG);
+
+  document.querySelectorAll('.align-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.textAlign = btn.dataset.align;
+      renderPreview();
+    });
+  });
+
+  document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.titleSize = btn.dataset.size;
+      renderPreview();
+    });
+  });
+
+  titleGapSlider.addEventListener('input', () => {
+    state.titleGap = parseInt(titleGapSlider.value, 10);
+    titleGapVal.textContent = state.titleGap + 'px';
+    renderPreview();
+  });
 }
 
 // ── Conditional Options Visibility ──
@@ -158,15 +189,15 @@ function createPageEl() {
 }
 
 // ──────────────────────────────────────────
-//  Pagination
+//  Pagination — word-level binary search
 // ──────────────────────────────────────────
 function paginateBody() {
   const body = state.body || '';
   if (!body) return [''];
 
-  const paragraphs = body.split('\n');
+  const inputParas = body.split('\n');
   const result = [];
-  let curParas = [];
+  let pageParas = [];
   let isFirstPage = true;
 
   // Hidden test page for overflow detection
@@ -174,31 +205,83 @@ function paginateBody() {
   testPage.style.cssText += ';position:fixed;left:-9999px;top:0;pointer-events:none;visibility:hidden;';
   document.body.appendChild(testPage);
 
-  function fits(text, isFirst) {
-    // Pass 0 as total since page count is unknown during pagination;
-    // page number display does not affect layout calculations.
-    renderPageContent(testPage, text, isFirst ? 0 : 1, 0);
+  function fitsCheck(paras, isFirst) {
+    renderPageContent(testPage, paras.join('\n'), isFirst ? 0 : 1, 0);
     const bodyEl = testPage.querySelector('[data-role="body"]');
     if (!bodyEl) return true;
     return bodyEl.scrollHeight <= bodyEl.clientHeight + OVERFLOW_TOLERANCE;
   }
 
+  function flushPage() {
+    result.push(pageParas.join('\n'));
+    isFirstPage = false;
+    pageParas = [];
+  }
+
+  // Binary search: how many words (starting at wordStart) can be appended
+  // as a new paragraph to pageParas without overflow?
+  function fitWords(words, wordStart) {
+    const n = words.length - wordStart;
+    if (n === 0) return 0;
+
+    const tryN = (count) => {
+      const text = words.slice(wordStart, wordStart + count).join(' ');
+      return fitsCheck([...pageParas, text], isFirstPage);
+    };
+
+    if (!tryN(1)) {
+      // Force at least 1 word on an empty page to avoid infinite loop
+      return pageParas.length === 0 ? 1 : 0;
+    }
+    if (tryN(n)) return n;
+
+    // Binary search for maximum count that fits
+    let lo = 1, hi = n - 1;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (tryN(mid)) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  }
+
   try {
-    for (let i = 0; i < paragraphs.length; i++) {
-      const candidate = [...curParas, paragraphs[i]];
-      if (fits(candidate.join('\n'), isFirstPage) || curParas.length === 0) {
-        curParas = candidate;
-      } else {
-        result.push(curParas.join('\n'));
-        isFirstPage = false;
-        curParas = [paragraphs[i]];
+    for (const para of inputParas) {
+      if (para === '') {
+        // Blank line — try to add as empty paragraph
+        const candidate = [...pageParas, ''];
+        if (fitsCheck(candidate, isFirstPage)) {
+          pageParas = candidate;
+        } else {
+          flushPage();
+          pageParas = [''];
+        }
+        continue;
+      }
+
+      const words = para.split(' ');
+      let wordStart = 0;
+
+      while (wordStart < words.length) {
+        const count = fitWords(words, wordStart);
+        if (count === 0) {
+          // Nothing fits on current page → flush and retry
+          flushPage();
+          continue;
+        }
+        pageParas.push(words.slice(wordStart, wordStart + count).join(' '));
+        wordStart += count;
+        if (wordStart < words.length) {
+          // Words remain in this paragraph → need a new page
+          flushPage();
+        }
       }
     }
   } finally {
     document.body.removeChild(testPage);
   }
 
-  result.push(curParas.join('\n'));
+  result.push(pageParas.join('\n'));
   return result;
 }
 
@@ -219,6 +302,7 @@ function renderPageContent(pageEl, bodyText, pageIdx, totalPages) {
 //  Render body text (with/without indent)
 // ──────────────────────────────────────────
 function renderBodyInto(container, text) {
+  container.style.textAlign = state.textAlign;
   const paras = text.split('\n');
   paras.forEach(para => {
     const p = document.createElement('p');
@@ -251,6 +335,10 @@ function renderTemplate1(pageEl, bodyText, pageIdx, totalPages) {
   if (state.showTitle && state.title && pageIdx === 0) {
     const t = el('div', 'tpl1-title');
     t.textContent = state.title;
+    t.style.textAlign = state.textAlign;
+    const titleFontSizes = { sm: '0.84rem', md: '1.05rem', lg: '1.3rem' };
+    t.style.fontSize = titleFontSizes[state.titleSize];
+    t.style.marginBottom = state.titleGap + 'px';
     textbox.appendChild(t);
   }
 
@@ -276,6 +364,10 @@ function renderTemplate2(pageEl, bodyText, pageIdx, totalPages) {
   if (state.showTitle && state.title && pageIdx === 0) {
     const t = el('div', 'tpl2-title');
     t.textContent = state.title;
+    t.style.textAlign = state.textAlign;
+    const titleFontSizes = { sm: '0.9rem', md: '1.25rem', lg: '1.6rem' };
+    t.style.fontSize = titleFontSizes[state.titleSize];
+    t.style.marginBottom = state.titleGap + 'px';
     wrap.appendChild(t);
   }
 

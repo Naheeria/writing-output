@@ -50,15 +50,37 @@
           <input type="text" id="titleInput" class="text-input" placeholder="제목을 입력하세요" />
         </div>
 
+        <div id="titleStyleWrap" style="margin-top:4px;margin-bottom:12px;">
+          <div class="section-label" style="margin-top:2px;">제목 크기</div>
+          <div class="size-btn-group">
+            <button class="size-btn" data-size="sm">소</button>
+            <button class="size-btn active" data-size="md">중</button>
+            <button class="size-btn" data-size="lg">대</button>
+          </div>
+          <div class="section-label" style="margin-top:10px;">제목-본문 간격</div>
+          <div class="slider-row">
+            <input type="range" id="titleGapSlider" min="4" max="60" value="20" class="slider-input" />
+            <span id="titleGapVal" class="slider-val">20px</span>
+          </div>
+        </div>
+
         <textarea id="bodyInput" class="text-area" rows="8" placeholder="본문을 입력하세요&#10;&#10;여러 줄의 글을 입력할 수 있습니다."></textarea>
 
-        <label class="toggle-row" style="margin-top:12px;margin-bottom:0;">
+        <label class="toggle-row" style="margin-top:12px;margin-bottom:8px;">
           <span>들여쓰기</span>
           <div class="toggle-wrap">
             <input type="checkbox" id="indentToggle" />
             <span class="toggle-slider"></span>
           </div>
         </label>
+
+        <div class="section-label">텍스트 정렬</div>
+        <div class="align-group">
+          <button class="align-btn active" data-align="justify">양쪽</button>
+          <button class="align-btn" data-align="left">왼쪽</button>
+          <button class="align-btn" data-align="center">가운데</button>
+          <button class="align-btn" data-align="right">오른쪽</button>
+        </div>
       </section>
 
       <!-- 템플릿 선택 -->
