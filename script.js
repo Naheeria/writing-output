@@ -219,18 +219,14 @@ function renderPageContent(pageEl, bodyText, pageIdx, totalPages) {
 //  Render body text (with/without indent)
 // ──────────────────────────────────────────
 function renderBodyInto(container, text) {
-  if (state.indent) {
-    const paras = text.split('\n');
-    paras.forEach(para => {
-      const p = document.createElement('p');
-      p.className = 'body-para';
-      p.textContent = para;
-      container.appendChild(p);
-    });
-  } else {
-    container.classList.add('no-indent');
-    container.textContent = text;
-  }
+  const paras = text.split('\n');
+  paras.forEach(para => {
+    const p = document.createElement('p');
+    p.className = 'body-para';
+    if (!state.indent) p.style.textIndent = '0';
+    p.textContent = para;
+    container.appendChild(p);
+  });
 }
 
 // ──────────────────────────────────────────
@@ -298,7 +294,7 @@ function renderTemplate2(pageEl, bodyText, pageIdx, totalPages) {
 }
 
 // ──────────────────────────────────────────
-//  PNG Download (all pages merged)
+//  PNG Download (single page → PNG, multi → ZIP)
 // ──────────────────────────────────────────
 async function downloadPNG() {
   downloadBtn.disabled = true;
@@ -326,22 +322,18 @@ async function downloadPNG() {
       link.href = canvases[0].toDataURL('image/png');
       link.click();
     } else {
-      // Merge pages vertically
-      const totalH = canvases.reduce((s, c) => s + c.height, 0);
-      const width   = Math.max(...canvases.map(c => c.width));
-      const merged  = document.createElement('canvas');
-      merged.width  = width;
-      merged.height = totalH;
-      const ctx = merged.getContext('2d');
-      let y = 0;
-      for (const c of canvases) {
-        ctx.drawImage(c, 0, y);
-        y += c.height;
-      }
+      // Multiple pages → separate PNGs bundled in a ZIP
+      const zip = new JSZip();
+      canvases.forEach((c, i) => {
+        const base64 = c.toDataURL('image/png').split(',')[1];
+        zip.file(`writing-output-p${i + 1}.png`, base64, { base64: true });
+      });
+      const blob = await zip.generateAsync({ type: 'blob' });
       const link = document.createElement('a');
-      link.download = 'writing-output.png';
-      link.href = merged.toDataURL('image/png');
+      link.download = 'writing-output.zip';
+      link.href = URL.createObjectURL(blob);
       link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 60000);
     }
   } catch (err) {
     console.error('Download failed:', err);

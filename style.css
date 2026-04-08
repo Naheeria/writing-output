@@ -472,7 +472,7 @@ html, body {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 80%;
-  max-height: 88%;
+  height: 88%;
   padding: 28px 28px;
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0,0,0,0.15);
@@ -523,10 +523,6 @@ html, body {
   word-break: keep-all;
   overflow: hidden;
   flex: 1;
-}
-
-.tpl2-body.no-indent {
-  white-space: pre-wrap;
 }
 
 .tpl2-pagenum {
