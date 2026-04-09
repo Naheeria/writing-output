@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>글 이미지 생성기</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=KoPub+Batang:wght@300;500&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Pretendard via jsDelivr -->
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet" />
+
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+          integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
+
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+          integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ── 왼쪽 컨트롤 패널 ── -->
+    <aside class="control-panel">
+      <h1 class="panel-title">글 이미지 생성기</h1>
+
+      <!-- 텍스트 입력 -->
+      <section class="panel-section">
+        <div class="section-label">텍스트 입력</div>
+
+        <label class="toggle-row">
+          <span>제목 표시</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="showTitle" checked />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+
+        <div id="titleFieldWrap" class="field-wrap">
+          <input type="text" id="titleInput" class="text-input" placeholder="제목을 입력하세요" />
+        </div>
+
+        <div id="titleStyleWrap" style="margin-top:4px;margin-bottom:12px;">
+          <div class="section-label" style="margin-top:2px;">제목 크기</div>
+          <div class="size-btn-group">
+            <button class="size-btn" data-size="sm">소</button>
+            <button class="size-btn active" data-size="md">중</button>
+            <button class="size-btn" data-size="lg">대</button>
+          </div>
+          <div class="section-label" style="margin-top:10px;">제목-본문 간격</div>
+          <div class="slider-row">
+            <input type="range" id="titleGapSlider" min="4" max="60" value="20" class="slider-input" />
+            <span id="titleGapVal" class="slider-val">20px</span>
+          </div>
+        </div>
+
+        <textarea id="bodyInput" class="text-area" rows="8" placeholder="본문을 입력하세요&#10;&#10;여러 줄의 글을 입력할 수 있습니다."></textarea>
+        <p class="help-text">한 줄에 <code>---</code>만 입력하면 장면 구분선으로 표시됩니다.</p>
+
+        <label class="toggle-row" style="margin-top:12px;margin-bottom:8px;">
+          <span>들여쓰기</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="indentToggle" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+
+        <div class="section-label">텍스트 정렬</div>
+        <div class="align-group">
+          <button class="align-btn active" data-align="justify">양쪽</button>
+          <button class="align-btn" data-align="left">왼쪽</button>
+          <button class="align-btn" data-align="center">가운데</button>
+          <button class="align-btn" data-align="right">오른쪽</button>
+        </div>
+
+        <div class="section-label" style="margin-top:14px;">장면 구분선 스타일</div>
+        <div class="divider-style-group" id="dividerStyleGroup">
+          <button class="divider-style-btn active" data-div="symbols">✦ ✦ ✦</button>
+          <button class="divider-style-btn" data-div="asterisk">* * *</button>
+          <button class="divider-style-btn" data-div="line">───</button>
+          <button class="divider-style-btn" data-div="wave">〰〰〰</button>
+        </div>
+      </section>
+
+      <!-- 템플릿 선택 -->
+      <section class="panel-section">
+        <div class="section-label">템플릿</div>
+        <div class="template-grid">
+          <button class="tpl-card active" data-tpl="1">
+            <div class="tpl-thumb tpl-thumb-1">
+              <div class="tpl-thumb-inner"></div>
+            </div>
+            <span>이미지 테두리형</span>
+          </button>
+          <button class="tpl-card" data-tpl="2">
+            <div class="tpl-thumb tpl-thumb-2">
+              <div class="tpl-thumb-lines"></div>
+            </div>
+            <span>단색 배경형</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 규격 선택 -->
+      <section class="panel-section">
+        <div class="section-label">규격</div>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="size" value="a5" checked />
+            <span class="radio-btn"></span>
+            <span>A5형 <em>(560 × 794px)</em></span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="size" value="bar" />
+            <span class="radio-btn"></span>
+            <span>바(Bar)형 <em>(420 × 806px)</em></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- 폰트 선택 -->
+      <section class="panel-section">
+        <div class="section-label">폰트</div>
+        <select id="fontSelect" class="select-input">
+          <option value="'Nanum Myeongjo', serif">나눔명조</option>
+          <option value="'KoPub Batang', serif">KoPub 명조</option>
+          <option value="'Gowun Batang', serif">고운바탕</option>
+          <option value="'Pretendard', sans-serif">Pretendard</option>
+        </select>
+
+        <div class="section-label" style="margin-top:12px;">본문 크기</div>
+        <div class="slider-row">
+          <input type="range" id="fontSizeSlider" min="11" max="18" value="14" class="slider-input" />
+          <span id="fontSizeVal" class="slider-val">14px</span>
+        </div>
+
+        <div class="section-label" style="margin-top:10px;">줄간격</div>
+        <div class="slider-row">
+          <input type="range" id="lineHeightSlider" min="14" max="26" step="1" value="19" class="slider-input" />
+          <span id="lineHeightVal" class="slider-val">1.9</span>
+        </div>
+      </section>
+
+      <!-- 하단 서명 -->
+      <section class="panel-section">
+        <div class="section-label">하단 서명</div>
+        <label class="toggle-row">
+          <span>서명 표시</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="showByline" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+        <div id="bylineFieldWrap" class="field-wrap" style="display:none">
+          <input type="text" id="bylineInput" class="text-input" placeholder="작가명 / @SNS ID 등" />
+        </div>
+      </section>
+
+      <!-- 조건부 옵션 -->
+      <!-- 템플릿 1 옵션: 이미지 업로드 + 투명도 -->
+      <section class="panel-section conditional-opts" id="opts-tpl1">
+        <div class="section-label">배경 이미지</div>
+        <label class="upload-btn">
+          <input type="file" id="bgImageInput" accept="image/*" />
+          <span>이미지 선택</span>
+        </label>
+        <p id="imageFileName" class="file-name-display">선택된 파일 없음</p>
+        <button id="clearImageBtn" class="clear-btn" style="display:none">이미지 제거</button>
+
+        <div class="section-label" style="margin-top:16px;">텍스트박스 투명도</div>
+        <div class="slider-row">
+          <input type="range" id="tpl1OpacitySlider" min="0" max="100" value="92" class="slider-input" />
+          <span id="tpl1OpacityVal" class="slider-val">92%</span>
+        </div>
+      </section>
+
+      <!-- 템플릿 2 옵션: 배경색 -->
+      <section class="panel-section conditional-opts" id="opts-tpl2" style="display:none">
+        <div class="section-label">배경색</div>
+        <div class="bg-color-group">
+          <button class="bg-color-btn active" data-color="#FFFFFF" title="흰색">
+            <span class="color-dot" style="background:#FFFFFF;border:1px solid #ddd;"></span>흰색
+          </button>
+          <button class="bg-color-btn" data-color="#F5F0E8" title="미색">
+            <span class="color-dot" style="background:#F5F0E8;border:1px solid #ddd;"></span>미색
+          </button>
+          <button class="bg-color-btn" data-color="#1A1A1A" title="검정">
+            <span class="color-dot" style="background:#1A1A1A;"></span>검정
+          </button>
+        </div>
+
+        <div class="section-label" style="margin-top:12px;">페이지 번호</div>
+        <label class="toggle-row">
+          <span>페이지 번호 표시</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="showPageNum" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+      </section>
+
+      <!-- 다운로드 버튼 -->
+      <div class="download-wrap">
+        <button id="downloadBtn" class="download-btn">PNG 다운로드</button>
+      </div>
+    </aside>
+
+    <!-- ── 오른쪽 프리뷰 영역 ── -->
+    <main class="preview-area">
+      <div id="pagesWrap" class="pages-wrap">
+        <!-- JS로 렌더링 -->
+      </div>
+    </main>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
