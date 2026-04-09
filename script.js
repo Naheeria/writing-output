@@ -8,7 +8,7 @@ const OVERFLOW_TOLERANCE = 2; // px tolerance for scrollHeight vs clientHeight c
 // ── Page dimensions ──
 const SIZES = {
   a5:  { w: 560, h: 794 },
-  bar: { w: 420, h: 686 },
+  bar: { w: 420, h: 806 },
 };
 
 // ── State ──
@@ -175,9 +175,9 @@ function renderPreview() {
 
   const pageTexts = paginateBody();
 
-  pageTexts.forEach((bodyText, idx) => {
+  pageTexts.forEach((pageData, idx) => {
     const pageEl = createPageEl();
-    renderPageContent(pageEl, bodyText, idx, pageTexts.length);
+    renderPageContent(pageEl, pageData.text, idx, pageTexts.length, pageData.firstParaIsContinuation);
     pagesWrap.appendChild(pageEl);
   });
 }
@@ -193,12 +193,13 @@ function createPageEl() {
 // ──────────────────────────────────────────
 function paginateBody() {
   const body = state.body || '';
-  if (!body) return [''];
+  if (!body) return [{ text: '', firstParaIsContinuation: false }];
 
   const inputParas = body.split('\n');
   const result = [];
   let pageParas = [];
   let isFirstPage = true;
+  let currentPageFirstParaIsContinuation = false;
 
   // Hidden test page for overflow detection
   const testPage = createPageEl();
@@ -206,16 +207,18 @@ function paginateBody() {
   document.body.appendChild(testPage);
 
   function fitsCheck(paras, isFirst) {
-    renderPageContent(testPage, paras.join('\n'), isFirst ? 0 : 1, 0);
+    const isCont = currentPageFirstParaIsContinuation && pageParas.length === 0;
+    renderPageContent(testPage, paras.join('\n'), isFirst ? 0 : 1, 0, isCont);
     const bodyEl = testPage.querySelector('[data-role="body"]');
     if (!bodyEl) return true;
     return bodyEl.scrollHeight <= bodyEl.clientHeight + OVERFLOW_TOLERANCE;
   }
 
-  function flushPage() {
-    result.push(pageParas.join('\n'));
+  function flushPage(splitPara = false) {
+    result.push({ text: pageParas.join('\n'), firstParaIsContinuation: currentPageFirstParaIsContinuation });
     isFirstPage = false;
     pageParas = [];
+    currentPageFirstParaIsContinuation = splitPara;
   }
 
   // Binary search: how many chars (starting at charStart) can be appended
@@ -253,7 +256,7 @@ function paginateBody() {
         if (fitsCheck(candidate, isFirstPage)) {
           pageParas = candidate;
         } else {
-          flushPage();
+          flushPage(false);
           pageParas = [''];
         }
         continue;
@@ -266,14 +269,14 @@ function paginateBody() {
         const count = fitChars(chars, charStart);
         if (count === 0) {
           // Nothing fits on current page → flush and retry
-          flushPage();
+          flushPage(false);
           continue;
         }
         pageParas.push(chars.slice(charStart, charStart + count).join(''));
         charStart += count;
         if (charStart < chars.length) {
           // Characters remain in this paragraph → need a new page
-          flushPage();
+          flushPage(true);
         }
       }
     }
@@ -282,34 +285,35 @@ function paginateBody() {
   }
 
   if (pageParas.length > 0) {
-    result.push(pageParas.join('\n'));
+    result.push({ text: pageParas.join('\n'), firstParaIsContinuation: currentPageFirstParaIsContinuation });
   }
-  return result.length ? result : [''];
+  return result.length ? result : [{ text: '', firstParaIsContinuation: false }];
 }
 
 // ──────────────────────────────────────────
 //  Page Content Dispatcher
 // ──────────────────────────────────────────
-function renderPageContent(pageEl, bodyText, pageIdx, totalPages) {
+function renderPageContent(pageEl, bodyText, pageIdx, totalPages, firstParaIsContinuation = false) {
   pageEl.innerHTML = '';
   pageEl.style.fontFamily = state.font;
 
   switch (state.template) {
-    case 1: renderTemplate1(pageEl, bodyText, pageIdx, totalPages); break;
-    case 2: renderTemplate2(pageEl, bodyText, pageIdx, totalPages); break;
+    case 1: renderTemplate1(pageEl, bodyText, pageIdx, totalPages, firstParaIsContinuation); break;
+    case 2: renderTemplate2(pageEl, bodyText, pageIdx, totalPages, firstParaIsContinuation); break;
   }
 }
 
 // ──────────────────────────────────────────
 //  Render body text (with/without indent)
 // ──────────────────────────────────────────
-function renderBodyInto(container, text) {
+function renderBodyInto(container, text, firstParaIsContinuation = false) {
   container.style.textAlign = state.textAlign;
   const paras = text.split('\n');
-  paras.forEach(para => {
+  paras.forEach((para, i) => {
     const p = document.createElement('p');
     p.className = 'body-para';
-    if (!state.indent) p.style.textIndent = '0';
+    const skipIndent = !state.indent || (i === 0 && firstParaIsContinuation);
+    if (skipIndent) p.style.textIndent = '0';
     p.textContent = para;
     container.appendChild(p);
   });
@@ -318,7 +322,7 @@ function renderBodyInto(container, text) {
 // ──────────────────────────────────────────
 //  Template 1 — 이미지 테두리형
 // ──────────────────────────────────────────
-function renderTemplate1(pageEl, bodyText, pageIdx, totalPages) {
+function renderTemplate1(pageEl, bodyText, pageIdx, totalPages, firstParaIsContinuation = false) {
   const wrap = el('div', 'tpl1-wrap');
 
   if (state.bgImageSrc) {
@@ -346,7 +350,7 @@ function renderTemplate1(pageEl, bodyText, pageIdx, totalPages) {
 
   const b = el('div', 'tpl1-body');
   b.setAttribute('data-role', 'body');
-  renderBodyInto(b, bodyText || '본문을 입력하세요.');
+  renderBodyInto(b, bodyText || '본문을 입력하세요.', firstParaIsContinuation);
   textbox.appendChild(b);
 
   wrap.appendChild(textbox);
@@ -356,7 +360,7 @@ function renderTemplate1(pageEl, bodyText, pageIdx, totalPages) {
 // ──────────────────────────────────────────
 //  Template 2 — 단색 배경형
 // ──────────────────────────────────────────
-function renderTemplate2(pageEl, bodyText, pageIdx, totalPages) {
+function renderTemplate2(pageEl, bodyText, pageIdx, totalPages, firstParaIsContinuation = false) {
   const wrap = el('div', 'tpl2-wrap');
   wrap.style.background = state.bgColor;
 
@@ -375,7 +379,7 @@ function renderTemplate2(pageEl, bodyText, pageIdx, totalPages) {
 
   const b = el('div', 'tpl2-body');
   b.setAttribute('data-role', 'body');
-  renderBodyInto(b, bodyText || '본문을 입력하세요.');
+  renderBodyInto(b, bodyText || '본문을 입력하세요.', firstParaIsContinuation);
   wrap.appendChild(b);
 
   if (state.showPageNum) {
