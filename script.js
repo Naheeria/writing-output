@@ -23,6 +23,11 @@ const state = {
   textAlign: 'justify',  // 'justify' | 'left' | 'center' | 'right'
   titleSize: 'md',       // 'sm' | 'md' | 'lg'
   titleGap: 20,          // px between title and body
+  fontSize: 14,          // body font size in px
+  lineHeight: 1.9,       // body line height
+  dividerStyle: 'symbols', // 'symbols' | 'asterisk' | 'line' | 'wave'
+  showByline: false,     // bottom signature
+  bylineText: '',
   bgImageSrc: null,    // template 1
   tpl1Opacity: 92,     // template 1, 0–100
   bgColor: '#FFFFFF',  // template 2
@@ -40,6 +45,13 @@ const titleGapSlider   = document.getElementById('titleGapSlider');
 const titleGapVal      = document.getElementById('titleGapVal');
 const indentToggle     = document.getElementById('indentToggle');
 const fontSelect       = document.getElementById('fontSelect');
+const fontSizeSlider   = document.getElementById('fontSizeSlider');
+const fontSizeVal      = document.getElementById('fontSizeVal');
+const lineHeightSlider = document.getElementById('lineHeightSlider');
+const lineHeightVal    = document.getElementById('lineHeightVal');
+const showBylineChk    = document.getElementById('showByline');
+const bylineFieldWrap  = document.getElementById('bylineFieldWrap');
+const bylineInput      = document.getElementById('bylineInput');
 const bgImageInput     = document.getElementById('bgImageInput');
 const imageFileName    = document.getElementById('imageFileName');
 const clearImageBtn    = document.getElementById('clearImageBtn');
@@ -159,6 +171,38 @@ function bindEvents() {
     titleGapVal.textContent = state.titleGap + 'px';
     renderPreview();
   });
+
+  fontSizeSlider.addEventListener('input', () => {
+    state.fontSize = parseInt(fontSizeSlider.value, 10);
+    fontSizeVal.textContent = state.fontSize + 'px';
+    renderPreview();
+  });
+
+  lineHeightSlider.addEventListener('input', () => {
+    state.lineHeight = parseInt(lineHeightSlider.value, 10) / 10;
+    lineHeightVal.textContent = state.lineHeight.toFixed(1);
+    renderPreview();
+  });
+
+  showBylineChk.addEventListener('change', () => {
+    state.showByline = showBylineChk.checked;
+    bylineFieldWrap.style.display = state.showByline ? 'block' : 'none';
+    renderPreview();
+  });
+
+  bylineInput.addEventListener('input', () => {
+    state.bylineText = bylineInput.value;
+    renderPreview();
+  });
+
+  document.querySelectorAll('.divider-style-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.divider-style-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.dividerStyle = btn.dataset.div;
+      renderPreview();
+    });
+  });
 }
 
 // ── Conditional Options Visibility ──
@@ -178,7 +222,16 @@ function renderPreview() {
   pageTexts.forEach((pageData, idx) => {
     const pageEl = createPageEl();
     renderPageContent(pageEl, pageData.text, idx, pageTexts.length, pageData.firstParaIsContinuation);
-    pagesWrap.appendChild(pageEl);
+
+    const wrapper = el('div', 'page-wrapper');
+    wrapper.appendChild(pageEl);
+
+    const copyBtn = el('button', 'page-copy-btn');
+    copyBtn.textContent = '클립보드에 복사';
+    copyBtn.addEventListener('click', () => copyPageToClipboard(pageEl, copyBtn));
+    wrapper.appendChild(copyBtn);
+
+    pagesWrap.appendChild(wrapper);
   });
 }
 
@@ -304,18 +357,33 @@ function renderPageContent(pageEl, bodyText, pageIdx, totalPages, firstParaIsCon
 }
 
 // ──────────────────────────────────────────
-//  Render body text (with/without indent)
+//  Render body text (with/without indent, dividers)
 // ──────────────────────────────────────────
+const DIVIDER_TEXT = { symbols: '✦ ✦ ✦', asterisk: '* * *', wave: '〰〰〰' };
+
 function renderBodyInto(container, text, firstParaIsContinuation = false) {
   container.style.textAlign = state.textAlign;
+  container.style.fontSize = state.fontSize + 'px';
+  container.style.lineHeight = state.lineHeight;
   const paras = text.split('\n');
-  paras.forEach((para, i) => {
-    const p = document.createElement('p');
-    p.className = 'body-para';
-    const skipIndent = !state.indent || (i === 0 && firstParaIsContinuation);
+  let isFirstEffectivePara = true;
+  paras.forEach((para) => {
+    if (para.trim() === '---') {
+      const divider = el('div', 'scene-divider');
+      divider.dataset.style = state.dividerStyle;
+      if (state.dividerStyle !== 'line') {
+        divider.textContent = DIVIDER_TEXT[state.dividerStyle] || '✦ ✦ ✦';
+      }
+      container.appendChild(divider);
+      isFirstEffectivePara = false;
+      return;
+    }
+    const p = el('p', 'body-para');
+    const skipIndent = !state.indent || (isFirstEffectivePara && firstParaIsContinuation);
     if (skipIndent) p.style.textIndent = '0';
     p.textContent = para;
     container.appendChild(p);
+    if (para !== '') isFirstEffectivePara = false;
   });
 }
 
@@ -353,6 +421,12 @@ function renderTemplate1(pageEl, bodyText, pageIdx, totalPages, firstParaIsConti
   renderBodyInto(b, bodyText || '본문을 입력하세요.', firstParaIsContinuation);
   textbox.appendChild(b);
 
+  if (state.showByline && state.bylineText) {
+    const byline = el('div', 'tpl1-byline');
+    byline.textContent = state.bylineText;
+    textbox.appendChild(byline);
+  }
+
   wrap.appendChild(textbox);
   pageEl.appendChild(wrap);
 }
@@ -382,6 +456,12 @@ function renderTemplate2(pageEl, bodyText, pageIdx, totalPages, firstParaIsConti
   renderBodyInto(b, bodyText || '본문을 입력하세요.', firstParaIsContinuation);
   wrap.appendChild(b);
 
+  if (state.showByline && state.bylineText) {
+    const byline = el('div', 'tpl2-byline');
+    byline.textContent = state.bylineText;
+    wrap.appendChild(byline);
+  }
+
   if (state.showPageNum) {
     const pn = el('div', 'tpl2-pagenum');
     pn.textContent = String(pageIdx + 1);
@@ -389,6 +469,43 @@ function renderTemplate2(pageEl, bodyText, pageIdx, totalPages, firstParaIsConti
   }
 
   pageEl.appendChild(wrap);
+}
+
+// ──────────────────────────────────────────
+//  Clipboard Copy (single page)
+// ──────────────────────────────────────────
+async function copyPageToClipboard(pageEl, btn) {
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '복사 중…';
+
+  try {
+    const c = await html2canvas(pageEl, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false,
+    });
+
+    await new Promise((resolve, reject) => {
+      c.toBlob(async (blob) => {
+        if (!blob) { reject(new Error('toBlob failed')); return; }
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          resolve();
+        } catch (e) { reject(e); }
+      }, 'image/png');
+    });
+
+    btn.textContent = '복사 완료!';
+    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1500);
+  } catch (err) {
+    console.error('Clipboard copy failed:', err);
+    alert('클립보드 복사에 실패했습니다.\n브라우저 권한을 확인하거나 PNG 다운로드를 이용해주세요.');
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
 
 // ──────────────────────────────────────────

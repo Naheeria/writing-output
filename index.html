@@ -65,6 +65,7 @@
         </div>
 
         <textarea id="bodyInput" class="text-area" rows="8" placeholder="본문을 입력하세요&#10;&#10;여러 줄의 글을 입력할 수 있습니다."></textarea>
+        <p class="help-text">한 줄에 <code>---</code>만 입력하면 장면 구분선으로 표시됩니다.</p>
 
         <label class="toggle-row" style="margin-top:12px;margin-bottom:8px;">
           <span>들여쓰기</span>
@@ -80,6 +81,14 @@
           <button class="align-btn" data-align="left">왼쪽</button>
           <button class="align-btn" data-align="center">가운데</button>
           <button class="align-btn" data-align="right">오른쪽</button>
+        </div>
+
+        <div class="section-label" style="margin-top:14px;">장면 구분선 스타일</div>
+        <div class="divider-style-group" id="dividerStyleGroup">
+          <button class="divider-style-btn active" data-div="symbols">✦ ✦ ✦</button>
+          <button class="divider-style-btn" data-div="asterisk">* * *</button>
+          <button class="divider-style-btn" data-div="line">───</button>
+          <button class="divider-style-btn" data-div="wave">〰〰〰</button>
         </div>
       </section>
 
@@ -128,6 +137,33 @@
           <option value="'Gowun Batang', serif">고운바탕</option>
           <option value="'Pretendard', sans-serif">Pretendard</option>
         </select>
+
+        <div class="section-label" style="margin-top:12px;">본문 크기</div>
+        <div class="slider-row">
+          <input type="range" id="fontSizeSlider" min="11" max="18" value="14" class="slider-input" />
+          <span id="fontSizeVal" class="slider-val">14px</span>
+        </div>
+
+        <div class="section-label" style="margin-top:10px;">줄간격</div>
+        <div class="slider-row">
+          <input type="range" id="lineHeightSlider" min="14" max="26" value="19" class="slider-input" />
+          <span id="lineHeightVal" class="slider-val">1.9</span>
+        </div>
+      </section>
+
+      <!-- 하단 서명 -->
+      <section class="panel-section">
+        <div class="section-label">하단 서명</div>
+        <label class="toggle-row">
+          <span>서명 표시</span>
+          <div class="toggle-wrap">
+            <input type="checkbox" id="showByline" />
+            <span class="toggle-slider"></span>
+          </div>
+        </label>
+        <div id="bylineFieldWrap" class="field-wrap" style="display:none">
+          <input type="text" id="bylineInput" class="text-input" placeholder="작가명 / @SNS ID 등" />
+        </div>
       </section>
 
       <!-- 조건부 옵션 -->

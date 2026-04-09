@@ -595,6 +595,101 @@ html, body {
   content: '\00a0';
 }
 
+/* ── Divider style buttons ── */
+.divider-style-group {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.divider-style-btn {
+  padding: 7px 4px;
+  border: 1.5px solid #E0DDD8;
+  border-radius: 6px;
+  background: none;
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #555;
+  letter-spacing: 0.05em;
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divider-style-btn.active { border-color: #5B7055; color: #3A5034; font-weight: 700; background: #F0F4EE; }
+.divider-style-btn:hover:not(.active) { border-color: #AABA9E; }
+
+/* ── Scene divider in page body ── */
+.scene-divider {
+  text-align: center;
+  opacity: 0.55;
+  padding: 0.45em 0;
+  font-size: 0.82em;
+  letter-spacing: 0.5em;
+  line-height: 1;
+  word-break: normal;
+  text-indent: 0 !important;
+}
+
+.scene-divider[data-style="line"] {
+  border-top: 1px solid currentColor;
+  margin: 0.65em 8% 0.3em;
+  padding: 0;
+  letter-spacing: 0;
+}
+
+/* ── Byline (bottom signature) ── */
+.tpl1-byline,
+.tpl2-byline {
+  flex-shrink: 0;
+  font-size: 0.72em;
+  opacity: 0.6;
+  text-align: right;
+  padding-top: 8px;
+  letter-spacing: 0.04em;
+  word-break: keep-all;
+  line-height: 1.4;
+}
+
+/* ── Help text ── */
+.help-text {
+  font-size: 0.75rem;
+  color: #AAA;
+  margin-top: 5px;
+}
+
+.help-text code {
+  font-family: monospace;
+  background: #F0EDE8;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* ── Per-page copy button ── */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-copy-btn {
+  padding: 5px 18px;
+  border: 1.5px solid #C0BDB6;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.75);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  color: #666;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.page-copy-btn:hover { border-color: #5B7055; color: #3A5034; background: rgba(255,255,255,0.95); }
+
 /* ── Responsive ── */
 @media (max-width: 800px) {
   .app-layout {
